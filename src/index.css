@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Inter:wght@300;400;500;600&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -8,8 +10,69 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    /* Cheinly: dark base, gold serif, teal action */
+    --background: 0 0% 4%;
+    --foreground: 40 30% 92%;
+
+    --card: 0 0% 7%;
+    --card-foreground: 40 30% 92%;
+
+    --popover: 0 0% 6%;
+    --popover-foreground: 40 30% 92%;
+
+    /* Teal — primary action */
+    --primary: 178 55% 52%;
+    --primary-foreground: 0 0% 6%;
+    --primary-glow: 178 70% 65%;
+
+    /* Gold — brand accent */
+    --gold: 40 60% 55%;
+    --gold-foreground: 0 0% 6%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 40 30% 92%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 40 10% 60%;
+
+    --accent: 178 55% 52%;
+    --accent-foreground: 0 0% 6%;
+
+    --destructive: 0 70% 55%;
+    --destructive-foreground: 0 0% 98%;
+
+    --success: 150 60% 45%;
+    --success-foreground: 0 0% 98%;
+
+    --border: 40 15% 18%;
+    --input: 0 0% 10%;
+    --ring: 178 55% 52%;
+
+    --radius: 0.75rem;
+
+    --gradient-gold: linear-gradient(135deg, hsl(40 70% 60%), hsl(35 80% 50%));
+    --gradient-teal: linear-gradient(135deg, hsl(178 60% 50%), hsl(190 70% 55%));
+    --gradient-hero: radial-gradient(ellipse at top, hsl(178 50% 20% / 0.4), transparent 60%), radial-gradient(ellipse at bottom right, hsl(40 60% 30% / 0.25), transparent 60%);
+
+    --shadow-glow: 0 0 60px hsl(178 70% 50% / 0.25);
+    --shadow-card: 0 20px 60px -20px hsl(0 0% 0% / 0.6), 0 0 0 1px hsl(40 15% 18%);
+
+    --font-display: 'Cormorant Garamond', Georgia, serif;
+    --font-body: 'Inter', system-ui, sans-serif;
+
+    --sidebar-background: 0 0% 6%;
+    --sidebar-foreground: 40 30% 92%;
+    --sidebar-primary: 178 55% 52%;
+    --sidebar-primary-foreground: 0 0% 6%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 40 30% 92%;
+    --sidebar-border: 40 15% 18%;
+    --sidebar-ring: 178 55% 52%;
+  }
+
+  .dark {
+    --background: 0 0% 4%;
+    --foreground: 40 30% 92%;
 
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
@@ -101,5 +164,30 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .font-display {
+    font-family: var(--font-display);
+    letter-spacing: -0.01em;
+  }
+}
+
+@layer utilities {
+  .bg-hero {
+    background-image: var(--gradient-hero);
+  }
+  .bg-gold-gradient {
+    background-image: var(--gradient-gold);
+  }
+  .text-gold {
+    color: hsl(var(--gold));
+  }
+  .shadow-glow {
+    box-shadow: var(--shadow-glow);
+  }
+  .shadow-card {
+    box-shadow: var(--shadow-card);
   }
 }

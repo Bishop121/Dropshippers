@@ -5,6 +5,11 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
+import Login from "./pages/auth/Login";
+import ForgotPassword from "./pages/auth/ForgotPassword";
+import VerifyOtp from "./pages/auth/VerifyOtp";
+import ResetPassword from "./pages/auth/ResetPassword";
+import Success from "./pages/auth/Success";
 
 const queryClient = new QueryClient();
 
@@ -16,6 +21,11 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/auth/login" element={<Login />} />
+          <Route path="/auth/forgot-password" element={<ForgotPassword />} />
+          <Route path="/auth/verify-otp" element={<VerifyOtp />} />
+          <Route path="/auth/reset-password" element={<ResetPassword />} />
+          <Route path="/auth/success" element={<Success />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
