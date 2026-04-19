@@ -112,9 +112,9 @@ const Login = () => {
             </Link>
             <p className="text-muted-foreground">
               New to Cheinly?{" "}
-              <button type="button" onClick={() => toast.info("Contact your administrator for access")} className="text-gold hover:underline">
-                Request access
-              </button>
+              <Link to="/auth/signup" className="text-gold hover:underline">
+                Create an account
+              </Link>
             </p>
           </div>
         </form>
