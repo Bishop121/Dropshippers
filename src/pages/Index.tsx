@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, ShieldCheck, Network, Lock, Sparkles, Zap, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ThemeToggle } from "@/components/ThemeToggle";
 import logo from "@/assets/cheinly-logo.jpeg";
 
 const features = [
@@ -52,11 +53,14 @@ const Index = () => {
             <a href="#platform" className="transition-colors hover:text-foreground">Platform</a>
             <a href="#cta" className="transition-colors hover:text-foreground">Get started</a>
           </nav>
-          <Button asChild variant="hero" size="sm">
-            <Link to="/auth/signup">
-              Get started <ArrowRight className="h-4 w-4" />
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button asChild variant="hero" size="sm">
+              <Link to="/auth/signup">
+                Get started <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+          </div>
         </div>
       </header>
 
