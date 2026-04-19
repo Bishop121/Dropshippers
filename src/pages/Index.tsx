@@ -53,8 +53,8 @@ const Index = () => {
             <a href="#cta" className="transition-colors hover:text-foreground">Get started</a>
           </nav>
           <Button asChild variant="hero" size="sm">
-            <Link to="/auth/login">
-              Sign in <ArrowRight className="h-4 w-4" />
+            <Link to="/auth/signup">
+              Get started <ArrowRight className="h-4 w-4" />
             </Link>
           </Button>
         </div>
