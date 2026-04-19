@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import { Link } from "react-router-dom";
 import logo from "@/assets/cheinly-logo.jpeg";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -16,15 +17,18 @@ export const AuthLayout = ({ children, step }: AuthLayoutProps) => {
           <img src={logo} alt="Cheinly" className="h-9 w-9 rounded-md object-cover ring-1 ring-gold/30" />
           <span className="font-display text-2xl text-gold tracking-wide">CHEINLY</span>
         </Link>
-        {step ? (
-          <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
-            Step {step.current} of {step.total}
-          </span>
-        ) : (
-          <Link to="/auth/login" className="text-sm text-muted-foreground hover:text-gold transition-colors">
-            Support
-          </Link>
-        )}
+        <div className="flex items-center gap-3">
+          {step ? (
+            <span className="text-xs uppercase tracking-[0.2em] text-muted-foreground">
+              Step {step.current} of {step.total}
+            </span>
+          ) : (
+            <Link to="/auth/login" className="text-sm text-muted-foreground hover:text-gold transition-colors">
+              Support
+            </Link>
+          )}
+          <ThemeToggle />
+        </div>
       </header>
 
       {/* Main */}
