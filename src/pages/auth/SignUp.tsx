@@ -59,30 +59,40 @@ const orgSchema = z.object({
   agree: z.literal(true, { errorMap: () => ({ message: "You must accept the terms" }) }),
 });
 
+type Role = "seller" | "rider" | null;
+
 const SignUp = () => {
   const nav = useNavigate();
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Step 1
+  // Step 1 — Role
+  const [selectedRole, setSelectedRole] = useState<Role>(null);
+
+  // Step 2 — Account
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
 
-  // Step 2
+  // Step 3 — Organization
   const [organization, setOrganization] = useState("");
   const [role, setRole] = useState("");
   const [size, setSize] = useState("");
   const [country, setCountry] = useState("");
   const [agree, setAgree] = useState(false);
 
-  // Step 3 — OTP
+  // Step 4 — OTP
   const [otp, setOtp] = useState(["", "", "", "", "", ""]);
 
-  const next = () => setStep((s) => Math.min(s + 1, 4));
+  const next = () => setStep((s) => Math.min(s + 1, 5));
   const back = () => setStep((s) => Math.max(s - 1, 1));
+
+  const submitRole = () => {
+    if (!selectedRole) return toast.error("Choose your role to continue");
+    next();
+  };
 
   const submitAccount = (e: React.FormEvent) => {
     e.preventDefault();
@@ -124,26 +134,35 @@ const SignUp = () => {
     }, 700);
   };
 
-  const labels = ["Account", "Organization", "Verify Email", "All set"];
+  const labels = ["Choose role", "Account", "Organization", "Verify Email", "All set"];
+  const isSeller = selectedRole === "seller";
 
   return (
-    <AuthLayout step={{ current: step, total: 4 }}>
+    <AuthLayout step={{ current: step, total: 5 }}>
       <AuthCard
         title={
           step === 1
-            ? "Create your Cheinly account"
+            ? "Choose your role"
             : step === 2
-            ? "Tell us about your organization"
+            ? `Create your ${isSeller ? "seller" : "rider"} account`
             : step === 3
+            ? isSeller
+              ? "Tell us about your business"
+              : "Tell us about you"
+            : step === 4
             ? "Verify your email"
             : "Welcome to Cheinly"
         }
         subtitle={
           step === 1
-            ? "Join the network built for the modern enterprise."
+            ? "Tell us how you'll use Cheinly. You can switch later."
             : step === 2
-            ? "We'll tailor your portal to your organization."
+            ? "Join the network built for the modern enterprise."
             : step === 3
+            ? isSeller
+              ? "We'll tailor your storefront to your business."
+              : "We'll match you with deliveries near you."
+            : step === 4
             ? (
               <>
                 We sent a 6-digit code to <span className="text-foreground">{email || "your email"}</span>.
@@ -151,9 +170,84 @@ const SignUp = () => {
             )
             : "Your account is ready. Sign in to enter your portal."
         }
-        icon={step === 4 ? CheckCircle2 : undefined}
+        icon={step === 5 ? CheckCircle2 : undefined}
       >
-        {step < 4 && <StepProgress current={step} total={3} label={labels[step - 1]} />}
+        {step < 5 && <StepProgress current={step} total={4} label={labels[step - 1]} />}
+
+        {/* STEP 1 — Role */}
+        {step === 1 && (
+          <div className="space-y-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {([
+                {
+                  id: "seller" as const,
+                  icon: Store,
+                  title: "Seller",
+                  desc: "Run your storefront, manage products, and reach buyers.",
+                  perks: ["Storefront builder", "Order management", "Payouts"],
+                },
+                {
+                  id: "rider" as const,
+                  icon: Bike,
+                  title: "Rider",
+                  desc: "Earn by delivering orders on your schedule.",
+                  perks: ["Flexible shifts", "Live navigation", "Instant earnings"],
+                },
+              ]).map(({ id, icon: Icon, title, desc, perks }) => {
+                const active = selectedRole === id;
+                return (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setSelectedRole(id)}
+                    className={`group relative text-left rounded-xl border bg-card p-5 transition-all ${
+                      active
+                        ? "border-gold shadow-glow ring-1 ring-gold/40"
+                        : "border-border hover:border-gold/50"
+                    }`}
+                  >
+                    {active && (
+                      <CheckCircle2 className="absolute top-3 right-3 h-5 w-5 text-gold" />
+                    )}
+                    <div className={`inline-flex h-12 w-12 items-center justify-center rounded-lg mb-4 ${
+                      active ? "bg-gold-gradient" : "bg-secondary"
+                    }`}>
+                      <Icon className={`h-6 w-6 ${active ? "text-gold-foreground" : "text-gold"}`} />
+                    </div>
+                    <h3 className="font-display text-xl text-foreground mb-1">{title}</h3>
+                    <p className="text-xs text-muted-foreground mb-3 leading-relaxed">{desc}</p>
+                    <ul className="space-y-1">
+                      {perks.map((p) => (
+                        <li key={p} className="flex items-center gap-2 text-xs text-muted-foreground">
+                          <span className="h-1 w-1 rounded-full bg-gold" />
+                          {p}
+                        </li>
+                      ))}
+                    </ul>
+                  </button>
+                );
+              })}
+            </div>
+
+            <Button
+              type="button"
+              onClick={submitRole}
+              variant="hero"
+              size="lg"
+              className="w-full"
+              disabled={!selectedRole}
+            >
+              Continue <ArrowRight className="h-4 w-4" />
+            </Button>
+
+            <p className="text-center text-sm text-muted-foreground">
+              Already have an account?{" "}
+              <Link to="/auth/login" className="text-gold hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </div>
+        )}
 
         {/* STEP 1 — Account */}
         {step === 1 && (
