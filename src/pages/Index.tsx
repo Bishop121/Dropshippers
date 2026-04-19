@@ -1,26 +1,180 @@
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ShieldCheck, Network, Lock, Sparkles, Zap, Globe2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import logo from "@/assets/cheinly-logo.jpeg";
+
+const features = [
+  {
+    icon: ShieldCheck,
+    title: "Zero-trust security",
+    description: "Every request verified. Every session encrypted. Built on a defense-in-depth model trusted by enterprises.",
+  },
+  {
+    icon: Network,
+    title: "Connected intelligence",
+    description: "A unified mesh that links your people, data, and systems — delivering insight where decisions happen.",
+  },
+  {
+    icon: Lock,
+    title: "Granular access",
+    description: "Role-based permissions and adaptive policies keep the right doors open and the wrong ones closed.",
+  },
+  {
+    icon: Zap,
+    title: "Realtime sync",
+    description: "Sub-second propagation across your network so teams act on the truth, not yesterday's snapshot.",
+  },
+  {
+    icon: Globe2,
+    title: "Global by design",
+    description: "Multi-region presence with low-latency edges. Operate everywhere your business does.",
+  },
+  {
+    icon: Sparkles,
+    title: "Adaptive workflows",
+    description: "Intelligent automation that learns the patterns of your organization and orchestrates them at scale.",
+  },
+];
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background bg-hero flex flex-col items-center justify-center px-6 text-center">
-      <img src={logo} alt="Cheinly logo" className="h-24 w-24 rounded-2xl object-cover ring-1 ring-gold/40 shadow-glow mb-8 animate-glow-pulse" />
-      <h1 className="font-display text-5xl md:text-7xl text-gold tracking-wide">CHEINLY</h1>
-      <p className="mt-4 max-w-xl text-muted-foreground">
-        Connected intelligence. Secure access to your network — built for the modern enterprise.
-      </p>
-      <div className="mt-10 flex flex-col sm:flex-row gap-3">
-        <Button asChild variant="hero" size="lg">
-          <Link to="/auth/login">
-            Enter Portal <ArrowRight className="h-4 w-4" />
+    <div className="min-h-screen bg-background">
+      {/* Nav */}
+      <header className="sticky top-0 z-40 border-b border-border/50 bg-background/70 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+          <Link to="/" className="flex items-center gap-3">
+            <img src={logo} alt="Cheinly logo" className="h-9 w-9 rounded-lg object-cover ring-1 ring-gold/40" />
+            <span className="font-display text-2xl tracking-wider text-gold">CHEINLY</span>
           </Link>
-        </Button>
-        <Button asChild variant="outline" size="lg" className="border-gold/40 text-gold hover:bg-gold/10 hover:text-gold">
-          <Link to="/auth/forgot-password">Forgot password</Link>
-        </Button>
-      </div>
+          <nav className="hidden items-center gap-8 text-sm text-muted-foreground md:flex">
+            <a href="#features" className="transition-colors hover:text-foreground">Features</a>
+            <a href="#platform" className="transition-colors hover:text-foreground">Platform</a>
+            <a href="#cta" className="transition-colors hover:text-foreground">Get started</a>
+          </nav>
+          <Button asChild variant="hero" size="sm">
+            <Link to="/auth/login">
+              Sign in <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </div>
+      </header>
+
+      {/* Hero */}
+      <section className="relative overflow-hidden bg-hero">
+        <div className="mx-auto max-w-7xl px-6 py-24 md:py-32">
+          <div className="mx-auto max-w-3xl text-center">
+            <div className="mx-auto mb-8 flex w-fit items-center gap-2 rounded-full border border-gold/30 bg-gold/5 px-4 py-1.5 text-xs uppercase tracking-[0.2em] text-gold">
+              <Sparkles className="h-3 w-3" /> Connected intelligence
+            </div>
+            <h1 className="font-display text-5xl leading-[1.05] text-foreground md:text-7xl">
+              The secure backbone <br />
+              for the <span className="text-gold">modern enterprise</span>.
+            </h1>
+            <p className="mx-auto mt-6 max-w-xl text-lg text-muted-foreground">
+              Cheinly unifies access, identity, and intelligence into a single elegant network — so your business moves faster, safer, and smarter.
+            </p>
+            <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <Button asChild variant="hero" size="lg">
+                <Link to="/auth/login">
+                  Enter the portal <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="border-gold/40 text-gold hover:bg-gold/10 hover:text-gold">
+                <a href="#features">Explore features</a>
+              </Button>
+            </div>
+          </div>
+
+          {/* Decorative orb */}
+          <div className="pointer-events-none absolute left-1/2 top-1/3 -z-10 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-primary/10 blur-3xl" aria-hidden />
+        </div>
+      </section>
+
+      {/* Features */}
+      <section id="features" className="border-t border-border/50 py-24">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="mx-auto max-w-2xl text-center">
+            <p className="text-xs uppercase tracking-[0.25em] text-gold">Platform</p>
+            <h2 className="mt-3 font-display text-4xl text-foreground md:text-5xl">
+              Crafted for organizations that <span className="text-gold">don't compromise</span>.
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              A focused set of capabilities that make secure, intelligent connectivity feel effortless.
+            </p>
+          </div>
+
+          <div className="mt-16 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {features.map(({ icon: Icon, title, description }) => (
+              <Card key={title} className="group border-border/60 bg-card/60 backdrop-blur transition-all hover:border-gold/40 hover:shadow-glow">
+                <CardContent className="p-7">
+                  <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-lg bg-gold-gradient text-gold-foreground">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <h3 className="font-display text-2xl text-foreground">{title}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Platform stats */}
+      <section id="platform" className="border-t border-border/50 bg-card/30 py-20">
+        <div className="mx-auto grid max-w-7xl gap-10 px-6 md:grid-cols-3">
+          {[
+            { k: "99.99%", v: "Network uptime" },
+            { k: "< 80ms", v: "Global edge latency" },
+            { k: "SOC 2 II", v: "Audited & certified" },
+          ].map(({ k, v }) => (
+            <div key={v} className="text-center">
+              <div className="font-display text-5xl text-gold md:text-6xl">{k}</div>
+              <div className="mt-2 text-sm uppercase tracking-[0.2em] text-muted-foreground">{v}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section id="cta" className="relative overflow-hidden border-t border-border/50 py-28">
+        <div className="absolute inset-0 -z-10 bg-hero" aria-hidden />
+        <div className="mx-auto max-w-3xl px-6 text-center">
+          <img src={logo} alt="" className="mx-auto mb-8 h-16 w-16 rounded-2xl object-cover ring-1 ring-gold/40 shadow-glow animate-glow-pulse" />
+          <h2 className="font-display text-4xl text-foreground md:text-6xl">
+            Step into your <span className="text-gold">network</span>.
+          </h2>
+          <p className="mx-auto mt-5 max-w-xl text-muted-foreground">
+            Sign in to access your Cheinly portal and bring your organization's connected intelligence to life.
+          </p>
+          <div className="mt-10 flex flex-col items-center justify-center gap-3 sm:flex-row">
+            <Button asChild variant="hero" size="lg">
+              <Link to="/auth/login">
+                Sign in to portal <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
+            <Button asChild variant="outline" size="lg" className="border-gold/40 text-gold hover:bg-gold/10 hover:text-gold">
+              <Link to="/auth/forgot-password">Recover access</Link>
+            </Button>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-border/50 py-10">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-4 px-6 text-sm text-muted-foreground md:flex-row">
+          <div className="flex items-center gap-2">
+            <img src={logo} alt="" className="h-6 w-6 rounded-md object-cover ring-1 ring-gold/30" />
+            <span className="font-display tracking-wider text-gold">CHEINLY</span>
+            <span className="ml-2">© {new Date().getFullYear()}</span>
+          </div>
+          <div className="flex items-center gap-6">
+            <a href="#features" className="hover:text-foreground">Features</a>
+            <a href="#platform" className="hover:text-foreground">Platform</a>
+            <Link to="/auth/login" className="hover:text-foreground">Sign in</Link>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 };
