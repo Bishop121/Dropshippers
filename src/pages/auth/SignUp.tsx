@@ -12,10 +12,18 @@ import {
   Mail,
   Shield,
   User,
-  Briefcase,
   Globe,
   Store,
   Bike,
+  Phone,
+  MapPin,
+  IdCard,
+  Car,
+  Hash,
+  FileImage,
+  Landmark,
+  Building,
+  Upload,
 } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthCard } from "@/components/auth/AuthCard";
@@ -32,12 +40,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 
 const accountSchema = z
   .object({
     fullName: z.string().trim().min(2, "Enter your full name").max(100),
-    email: z.string().trim().email("Enter a valid work email").max(255),
+    email: z.string().trim().email("Enter a valid email").max(255),
     password: z
       .string()
       .min(8, "Password must be at least 8 characters")
@@ -51,12 +60,35 @@ const accountSchema = z
     path: ["confirm"],
   });
 
-const orgSchema = z.object({
-  organization: z.string().trim().min(2, "Organization name is required").max(120),
-  role: z.string().trim().min(1, "Select your role"),
-  size: z.string().trim().min(1, "Select organization size"),
+const sellerProfileSchema = z.object({
+  businessName: z.string().trim().min(2, "Business name is required").max(120),
+  address: z.string().trim().min(5, "Business address is required").max(200),
+  phone: z.string().trim().min(7, "Enter a valid phone number").max(20),
   country: z.string().trim().min(2, "Country is required").max(80),
   agree: z.literal(true, { errorMap: () => ({ message: "You must accept the terms" }) }),
+});
+
+const riderProfileSchema = z.object({
+  phone: z.string().trim().min(7, "Enter a valid phone number").max(20),
+  vehicleType: z.string().trim().min(1, "Select vehicle type"),
+  plateNumber: z.string().trim().min(2, "Plate number is required").max(20),
+  licenseNumber: z.string().trim().min(3, "License number is required").max(40),
+  nin: z.string().trim().min(6, "NIN is required").max(20),
+  licensePhoto: z.string().min(1, "Upload a photo of your licence/permit"),
+  agree: z.literal(true, { errorMap: () => ({ message: "You must accept the terms" }) }),
+});
+
+const sellerIdentitySchema = z
+  .object({
+    idType: z.enum(["bvn", "nin"], { errorMap: () => ({ message: "Select an ID type" }) }),
+    idNumber: z.string().trim().min(10, "Enter a valid 10-11 digit number").max(11),
+  });
+
+const riderBankSchema = z.object({
+  bankName: z.string().trim().min(2, "Bank name is required").max(80),
+  accountNumber: z.string().trim().regex(/^\d{10}$/, "Account number must be 10 digits"),
+  accountName: z.string().trim().min(2, "Account name is required").max(120),
+  affiliation: z.string().trim().min(2, "Logistics company code or name is required").max(80),
 });
 
 type Role = "seller" | "rider" | null;
@@ -66,27 +98,52 @@ const SignUp = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
 
-  // Step 1 — Role
+  // Modals
+  const [phoneOtpOpen, setPhoneOtpOpen] = useState(false);
+  const [verifySuccessOpen, setVerifySuccessOpen] = useState(false);
+  const [phoneOtp, setPhoneOtp] = useState(["", "", "", "", "", ""]);
+
+  // Role
   const [selectedRole, setSelectedRole] = useState<Role>(null);
 
-  // Step 2 — Account
+  // Account
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
 
-  // Step 3 — Organization
-  const [organization, setOrganization] = useState("");
-  const [role, setRole] = useState("");
-  const [size, setSize] = useState("");
+  // Seller profile
+  const [businessName, setBusinessName] = useState("");
+  const [address, setAddress] = useState("");
   const [country, setCountry] = useState("");
+
+  // Shared
+  const [phone, setPhone] = useState("");
   const [agree, setAgree] = useState(false);
 
-  // Step 4 — OTP
-  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  // Rider profile
+  const [vehicleType, setVehicleType] = useState("");
+  const [plateNumber, setPlateNumber] = useState("");
+  const [licenseNumber, setLicenseNumber] = useState("");
+  const [nin, setNin] = useState("");
+  const [licensePhoto, setLicensePhoto] = useState<string>("");
+  const [licensePhotoName, setLicensePhotoName] = useState<string>("");
 
-  const next = () => setStep((s) => Math.min(s + 1, 5));
+  // Seller identity
+  const [idType, setIdType] = useState<"bvn" | "nin" | "">("");
+  const [idNumber, setIdNumber] = useState("");
+
+  // Rider banking + logistics
+  const [bankName, setBankName] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [accountName, setAccountName] = useState("");
+  const [affiliation, setAffiliation] = useState("");
+
+  const isSeller = selectedRole === "seller";
+  const totalSteps = 5; // role, account, profile, identity/bank, done
+
+  const next = () => setStep((s) => Math.min(s + 1, totalSteps));
   const back = () => setStep((s) => Math.max(s - 1, 1));
 
   const submitRole = () => {
@@ -101,32 +158,65 @@ const SignUp = () => {
     next();
   };
 
-  const submitOrg = (e: React.FormEvent) => {
+  // Profile step → triggers phone OTP modal
+  const submitProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    const r = orgSchema.safeParse({ organization, role, size, country, agree });
-    if (!r.success) return toast.error(r.error.errors[0].message);
-    setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      toast.success(`Verification code sent to ${email}`);
-      next();
-    }, 700);
-  };
-
-  const handleOtpChange = (i: number, v: string) => {
-    if (!/^\d?$/.test(v)) return;
-    const arr = [...otp];
-    arr[i] = v;
-    setOtp(arr);
-    if (v && i < 5) {
-      const el = document.getElementById(`otp-${i + 1}`);
-      el?.focus();
+    if (isSeller) {
+      const r = sellerProfileSchema.safeParse({ businessName, address, phone, country, agree });
+      if (!r.success) return toast.error(r.error.errors[0].message);
+    } else {
+      const r = riderProfileSchema.safeParse({
+        phone,
+        vehicleType,
+        plateNumber,
+        licenseNumber,
+        nin,
+        licensePhoto,
+        agree,
+      });
+      if (!r.success) return toast.error(r.error.errors[0].message);
     }
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setPhoneOtp(["", "", "", "", "", ""]);
+      setPhoneOtpOpen(true);
+      toast.success(`Verification code sent to ${phone}`);
+    }, 600);
   };
 
-  const submitOtp = (e: React.FormEvent) => {
+  const handlePhoneOtpChange = (i: number, v: string) => {
+    if (!/^\d?$/.test(v)) return;
+    const arr = [...phoneOtp];
+    arr[i] = v;
+    setPhoneOtp(arr);
+    if (v && i < 5) document.getElementById(`pin-${i + 1}`)?.focus();
+  };
+
+  const verifyPhoneOtp = () => {
+    if (phoneOtp.some((d) => !d)) return toast.error("Enter the 6-digit pin");
+    setLoading(true);
+    setTimeout(() => {
+      setLoading(false);
+      setPhoneOtpOpen(false);
+      setVerifySuccessOpen(true);
+    }, 600);
+  };
+
+  const continueAfterVerify = () => {
+    setVerifySuccessOpen(false);
+    next(); // → identity / banking
+  };
+
+  const submitIdentity = (e: React.FormEvent) => {
     e.preventDefault();
-    if (otp.some((d) => !d)) return toast.error("Enter the 6-digit code");
+    if (isSeller) {
+      const r = sellerIdentitySchema.safeParse({ idType, idNumber });
+      if (!r.success) return toast.error(r.error.errors[0].message);
+    } else {
+      const r = riderBankSchema.safeParse({ bankName, accountNumber, accountName, affiliation });
+      if (!r.success) return toast.error(r.error.errors[0].message);
+    }
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
@@ -134,11 +224,28 @@ const SignUp = () => {
     }, 700);
   };
 
-  const labels = ["Choose role", "Account", "Organization", "Verify Email", "All set"];
-  const isSeller = selectedRole === "seller";
+  const handleLicenseUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) return toast.error("File must be under 5MB");
+    const reader = new FileReader();
+    reader.onload = () => {
+      setLicensePhoto(reader.result as string);
+      setLicensePhotoName(file.name);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const labels = [
+    "Choose role",
+    "Account",
+    isSeller ? "Business profile" : "Rider profile",
+    isSeller ? "Identity verification" : "Banking & logistics",
+    "All set",
+  ];
 
   return (
-    <AuthLayout step={{ current: step, total: 5 }}>
+    <AuthLayout step={{ current: step, total: totalSteps }}>
       <AuthCard
         title={
           step === 1
@@ -148,9 +255,11 @@ const SignUp = () => {
             : step === 3
             ? isSeller
               ? "Tell us about your business"
-              : "Tell us about you"
+              : "Tell us about your ride"
             : step === 4
-            ? "Verify your email"
+            ? isSeller
+              ? "Verify your identity"
+              : "Banking & logistics"
             : "Welcome to Cheinly"
         }
         subtitle={
@@ -161,13 +270,11 @@ const SignUp = () => {
             : step === 3
             ? isSeller
               ? "We'll tailor your storefront to your business."
-              : "We'll match you with deliveries near you."
+              : "We need a few details to dispatch deliveries to you."
             : step === 4
-            ? (
-              <>
-                We sent a 6-digit code to <span className="text-foreground">{email || "your email"}</span>.
-              </>
-            )
+            ? isSeller
+              ? "Verify your BVN or NIN to activate payouts."
+              : "Where should we send your earnings?"
             : "Your account is ready. Sign in to enter your portal."
         }
         icon={step === 5 ? CheckCircle2 : undefined}
@@ -229,22 +336,13 @@ const SignUp = () => {
               })}
             </div>
 
-            <Button
-              type="button"
-              onClick={submitRole}
-              variant="hero"
-              size="lg"
-              className="w-full"
-              disabled={!selectedRole}
-            >
+            <Button type="button" onClick={submitRole} variant="hero" size="lg" className="w-full" disabled={!selectedRole}>
               Continue <ArrowRight className="h-4 w-4" />
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link to="/auth/login" className="text-gold hover:underline">
-                Sign in
-              </Link>
+              <Link to="/auth/login" className="text-gold hover:underline">Sign in</Link>
             </p>
           </div>
         )}
@@ -256,32 +354,15 @@ const SignUp = () => {
               <Label htmlFor="fullName">Full name</Label>
               <div className="relative">
                 <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="fullName"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  placeholder="Ada Lovelace"
-                  className="pl-10 h-12 bg-input border-border"
-                  autoComplete="name"
-                  maxLength={100}
-                />
+                <Input id="fullName" value={fullName} onChange={(e) => setFullName(e.target.value)} placeholder="Ada Lovelace" className="pl-10 h-12 bg-input border-border" autoComplete="name" maxLength={100} />
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="email">Work email</Label>
+              <Label htmlFor="email">Email</Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@company.com"
-                  className="pl-10 h-12 bg-input border-border"
-                  autoComplete="email"
-                  maxLength={255}
-                />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="you@example.com" className="pl-10 h-12 bg-input border-border" autoComplete="email" maxLength={255} />
               </div>
             </div>
 
@@ -289,22 +370,8 @@ const SignUp = () => {
               <Label htmlFor="password">Password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="password"
-                  type={showPwd ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="pl-10 pr-10 h-12 bg-input border-border"
-                  autoComplete="new-password"
-                  maxLength={100}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPwd((s) => !s)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
-                  aria-label="Toggle password visibility"
-                >
+                <Input id="password" type={showPwd ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} placeholder="••••••••" className="pl-10 pr-10 h-12 bg-input border-border" autoComplete="new-password" maxLength={100} />
+                <button type="button" onClick={() => setShowPwd((s) => !s)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" aria-label="Toggle password visibility">
                   {showPwd ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
@@ -315,110 +382,63 @@ const SignUp = () => {
               <Label htmlFor="confirm">Confirm password</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="confirm"
-                  type={showPwd ? "text" : "password"}
-                  value={confirm}
-                  onChange={(e) => setConfirm(e.target.value)}
-                  placeholder="Re-enter password"
-                  className="pl-10 h-12 bg-input border-border"
-                  autoComplete="new-password"
-                  maxLength={100}
-                />
+                <Input id="confirm" type={showPwd ? "text" : "password"} value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder="Re-enter password" className="pl-10 h-12 bg-input border-border" autoComplete="new-password" maxLength={100} />
               </div>
             </div>
 
-            <Button type="submit" variant="hero" size="lg" className="w-full">
-              Continue <ArrowRight className="h-4 w-4" />
-            </Button>
-
-            <p className="text-center text-sm text-muted-foreground">
-              Already have an account?{" "}
-              <Link to="/auth/login" className="text-gold hover:underline">
-                Sign in
-              </Link>
-            </p>
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" size="lg" onClick={back} className="border-border">
+                <ArrowLeft className="h-4 w-4" /> Back
+              </Button>
+              <Button type="submit" variant="hero" size="lg" className="flex-1">
+                Continue <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
           </form>
         )}
 
-        {/* STEP 3 — Organization */}
-        {step === 3 && (
-          <form onSubmit={submitOrg} className="space-y-5">
+        {/* STEP 3 — Profile (role-aware) */}
+        {step === 3 && isSeller && (
+          <form onSubmit={submitProfile} className="space-y-5">
             <div className="space-y-2">
-              <Label htmlFor="organization">Organization name</Label>
+              <Label htmlFor="businessName">Business name</Label>
               <div className="relative">
                 <Building2 className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="organization"
-                  value={organization}
-                  onChange={(e) => setOrganization(e.target.value)}
-                  placeholder="Acme Holdings"
-                  className="pl-10 h-12 bg-input border-border"
-                  maxLength={120}
-                />
+                <Input id="businessName" value={businessName} onChange={(e) => setBusinessName(e.target.value)} placeholder="Acme Marketplace Ltd" className="pl-10 h-12 bg-input border-border" maxLength={120} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="address">Business address</Label>
+              <div className="relative">
+                <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="address" value={address} onChange={(e) => setAddress(e.target.value)} placeholder="12 Marina Road, Lagos" className="pl-10 h-12 bg-input border-border" maxLength={200} />
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Your role</Label>
-                <Select value={role} onValueChange={setRole}>
-                  <SelectTrigger className="h-12 bg-input border-border">
-                    <Briefcase className="h-4 w-4 text-muted-foreground" />
-                    <SelectValue placeholder="Select role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="executive">Executive / C-Suite</SelectItem>
-                    <SelectItem value="it">IT / Security</SelectItem>
-                    <SelectItem value="ops">Operations</SelectItem>
-                    <SelectItem value="finance">Finance</SelectItem>
-                    <SelectItem value="other">Other</SelectItem>
-                  </SelectContent>
-                </Select>
+                <Label htmlFor="phone">Phone number</Label>
+                <div className="relative">
+                  <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+234 801 234 5678" className="pl-10 h-12 bg-input border-border" maxLength={20} />
+                </div>
               </div>
-
               <div className="space-y-2">
-                <Label>Organization size</Label>
-                <Select value={size} onValueChange={setSize}>
-                  <SelectTrigger className="h-12 bg-input border-border">
-                    <SelectValue placeholder="Select size" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1-10">1–10</SelectItem>
-                    <SelectItem value="11-50">11–50</SelectItem>
-                    <SelectItem value="51-200">51–200</SelectItem>
-                    <SelectItem value="201-1000">201–1,000</SelectItem>
-                    <SelectItem value="1000+">1,000+</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="country">Country</Label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  id="country"
-                  value={country}
-                  onChange={(e) => setCountry(e.target.value)}
-                  placeholder="United States"
-                  className="pl-10 h-12 bg-input border-border"
-                  maxLength={80}
-                />
+                <Label htmlFor="country">Country</Label>
+                <div className="relative">
+                  <Globe className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="country" value={country} onChange={(e) => setCountry(e.target.value)} placeholder="Nigeria" className="pl-10 h-12 bg-input border-border" maxLength={80} />
+                </div>
               </div>
             </div>
 
             <label className="flex items-start gap-3 rounded-lg border border-border bg-secondary/40 p-3">
-              <Checkbox
-                checked={agree}
-                onCheckedChange={(v) => setAgree(v === true)}
-                className="mt-0.5"
-              />
+              <Checkbox checked={agree} onCheckedChange={(v) => setAgree(v === true)} className="mt-0.5" />
               <span className="text-xs text-muted-foreground leading-relaxed">
                 I agree to Cheinly's{" "}
-                <Link to="#" className="text-gold hover:underline">Terms of Service</Link> and{" "}
-                <Link to="#" className="text-gold hover:underline">Privacy Policy</Link>, and consent to receive verification emails.
+                <Link to="#" className="text-gold hover:underline">Terms</Link> and{" "}
+                <Link to="#" className="text-gold hover:underline">Privacy Policy</Link>, and consent to phone verification.
               </span>
             </label>
 
@@ -427,47 +447,140 @@ const SignUp = () => {
                 <ArrowLeft className="h-4 w-4" /> Back
               </Button>
               <Button type="submit" disabled={loading} variant="hero" size="lg" className="flex-1">
-                {loading ? "Sending code…" : (
-                  <>
-                    Send verification <ArrowRight className="h-4 w-4" />
-                  </>
-                )}
+                {loading ? "Sending pin…" : (<>Send phone pin <Phone className="h-4 w-4" /></>)}
               </Button>
             </div>
           </form>
         )}
 
-        {/* STEP 4 — OTP */}
-        {step === 4 && (
-          <form onSubmit={submitOtp} className="space-y-6">
-            <div className="flex justify-center gap-2">
-              {otp.map((d, i) => (
-                <input
-                  key={i}
-                  id={`otp-${i}`}
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={d}
-                  onChange={(e) => handleOtpChange(i, e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Backspace" && !otp[i] && i > 0) {
-                      document.getElementById(`otp-${i - 1}`)?.focus();
-                    }
-                  }}
-                  className="h-14 w-12 rounded-lg border border-border bg-input text-center font-display text-2xl text-gold focus:outline-none focus:ring-2 focus:ring-primary"
-                />
-              ))}
+        {step === 3 && !isSeller && (
+          <form onSubmit={submitProfile} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone number</Label>
+              <div className="relative">
+                <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="phone" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+234 801 234 5678" className="pl-10 h-12 bg-input border-border" maxLength={20} />
+              </div>
             </div>
 
-            <div className="text-center text-sm text-muted-foreground">
-              Didn't receive it?{" "}
-              <button
-                type="button"
-                onClick={() => toast.success("New code sent")}
-                className="text-gold hover:underline"
-              >
-                Resend code
-              </button>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Vehicle type</Label>
+                <Select value={vehicleType} onValueChange={setVehicleType}>
+                  <SelectTrigger className="h-12 bg-input border-border">
+                    <Car className="h-4 w-4 text-muted-foreground" />
+                    <SelectValue placeholder="Select vehicle" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="motorcycle">Motorcycle</SelectItem>
+                    <SelectItem value="bicycle">Bicycle</SelectItem>
+                    <SelectItem value="car">Car</SelectItem>
+                    <SelectItem value="van">Van</SelectItem>
+                    <SelectItem value="truck">Truck</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="plate">Plate number</Label>
+                <div className="relative">
+                  <Hash className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="plate" value={plateNumber} onChange={(e) => setPlateNumber(e.target.value.toUpperCase())} placeholder="LAG-123-XY" className="pl-10 h-12 bg-input border-border" maxLength={20} />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="license">Driver's license number</Label>
+              <div className="relative">
+                <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="license" value={licenseNumber} onChange={(e) => setLicenseNumber(e.target.value)} placeholder="ABC12345AA" className="pl-10 h-12 bg-input border-border" maxLength={40} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="nin">NIN</Label>
+              <div className="relative">
+                <Shield className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="nin" value={nin} onChange={(e) => setNin(e.target.value.replace(/\D/g, ""))} placeholder="11-digit NIN" className="pl-10 h-12 bg-input border-border" maxLength={20} inputMode="numeric" />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="licensePhoto">Photo of licence / permit</Label>
+              <label htmlFor="licensePhoto" className="flex items-center gap-3 rounded-lg border border-dashed border-border bg-secondary/40 p-4 cursor-pointer hover:border-gold/50 transition-colors">
+                <div className="h-10 w-10 rounded-md bg-gold-gradient flex items-center justify-center">
+                  {licensePhoto ? (
+                    <FileImage className="h-5 w-5 text-gold-foreground" />
+                  ) : (
+                    <Upload className="h-5 w-5 text-gold-foreground" />
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-foreground truncate">
+                    {licensePhotoName || "Tap to upload (JPG / PNG, ≤ 5MB)"}
+                  </p>
+                  <p className="text-xs text-muted-foreground">Clear, well-lit photo</p>
+                </div>
+                <input id="licensePhoto" type="file" accept="image/*" className="hidden" onChange={handleLicenseUpload} />
+              </label>
+              {licensePhoto && (
+                <img src={licensePhoto} alt="Licence preview" className="mt-2 h-24 w-full object-cover rounded-md border border-border" />
+              )}
+            </div>
+
+            <label className="flex items-start gap-3 rounded-lg border border-border bg-secondary/40 p-3">
+              <Checkbox checked={agree} onCheckedChange={(v) => setAgree(v === true)} className="mt-0.5" />
+              <span className="text-xs text-muted-foreground leading-relaxed">
+                I agree to Cheinly's{" "}
+                <Link to="#" className="text-gold hover:underline">Terms</Link> and{" "}
+                <Link to="#" className="text-gold hover:underline">Privacy Policy</Link>, and consent to phone verification.
+              </span>
+            </label>
+
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" size="lg" onClick={back} className="border-border">
+                <ArrowLeft className="h-4 w-4" /> Back
+              </Button>
+              <Button type="submit" disabled={loading} variant="hero" size="lg" className="flex-1">
+                {loading ? "Sending pin…" : (<>Send phone pin <Phone className="h-4 w-4" /></>)}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {/* STEP 4 — Identity (seller) / Banking + Logistics (rider) */}
+        {step === 4 && isSeller && (
+          <form onSubmit={submitIdentity} className="space-y-5">
+            <div className="space-y-2">
+              <Label>ID type</Label>
+              <Select value={idType} onValueChange={(v) => setIdType(v as "bvn" | "nin")}>
+                <SelectTrigger className="h-12 bg-input border-border">
+                  <Shield className="h-4 w-4 text-muted-foreground" />
+                  <SelectValue placeholder="Select BVN or NIN" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="bvn">BVN — Bank Verification Number</SelectItem>
+                  <SelectItem value="nin">NIN — National Identification Number</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="idNumber">{idType === "bvn" ? "BVN" : idType === "nin" ? "NIN" : "ID number"}</Label>
+              <div className="relative">
+                <IdCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="idNumber" value={idNumber} onChange={(e) => setIdNumber(e.target.value.replace(/\D/g, ""))} placeholder="Enter 10-11 digit number" className="pl-10 h-12 bg-input border-border" maxLength={11} inputMode="numeric" />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Your ID is encrypted and used only to verify your identity.
+              </p>
+            </div>
+
+            <div className="rounded-lg border border-border bg-secondary/40 p-3 flex gap-3">
+              <Shield className="h-5 w-5 text-gold shrink-0 mt-0.5" />
+              <p className="text-xs text-muted-foreground">
+                We partner with regulated KYC providers. Your data never leaves trusted infrastructure.
+              </p>
             </div>
 
             <div className="flex gap-3">
@@ -475,8 +588,50 @@ const SignUp = () => {
                 <ArrowLeft className="h-4 w-4" /> Back
               </Button>
               <Button type="submit" disabled={loading} variant="hero" size="lg" className="flex-1">
-                <Shield className="h-4 w-4" />
-                {loading ? "Verifying…" : "Verify & continue"}
+                {loading ? "Verifying…" : (<>Verify identity <CheckCircle2 className="h-4 w-4" /></>)}
+              </Button>
+            </div>
+          </form>
+        )}
+
+        {step === 4 && !isSeller && (
+          <form onSubmit={submitIdentity} className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="bankName">Bank name</Label>
+              <div className="relative">
+                <Landmark className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="bankName" value={bankName} onChange={(e) => setBankName(e.target.value)} placeholder="GTBank" className="pl-10 h-12 bg-input border-border" maxLength={80} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="acctNo">Account number</Label>
+                <Input id="acctNo" value={accountNumber} onChange={(e) => setAccountNumber(e.target.value.replace(/\D/g, ""))} placeholder="0123456789" className="h-12 bg-input border-border" maxLength={10} inputMode="numeric" />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="acctName">Account name</Label>
+                <Input id="acctName" value={accountName} onChange={(e) => setAccountName(e.target.value)} placeholder="As on bank record" className="h-12 bg-input border-border" maxLength={120} />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="affiliation">Logistics affiliation</Label>
+              <div className="relative">
+                <Building className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input id="affiliation" value={affiliation} onChange={(e) => setAffiliation(e.target.value)} placeholder="Company code or name" className="pl-10 h-12 bg-input border-border" maxLength={80} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                If you ride independently, enter <span className="text-gold">INDEPENDENT</span>.
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <Button type="button" variant="outline" size="lg" onClick={back} className="border-border">
+                <ArrowLeft className="h-4 w-4" /> Back
+              </Button>
+              <Button type="submit" disabled={loading} variant="hero" size="lg" className="flex-1">
+                {loading ? "Saving…" : (<>Finish setup <CheckCircle2 className="h-4 w-4" /></>)}
               </Button>
             </div>
           </form>
@@ -489,17 +644,15 @@ const SignUp = () => {
               <p className="text-xs uppercase tracking-[0.2em] text-gold">Account ready</p>
               <p className="mt-2 text-foreground">{fullName || "—"}</p>
               <p className="text-sm text-muted-foreground">{email}</p>
-              {organization && (
-                <p className="text-sm text-muted-foreground mt-1">{organization}</p>
+              {isSeller && businessName && (
+                <p className="text-sm text-muted-foreground mt-1">{businessName}</p>
+              )}
+              {!isSeller && vehicleType && (
+                <p className="text-sm text-muted-foreground mt-1 capitalize">{vehicleType} • {plateNumber}</p>
               )}
             </div>
 
-            <Button
-              variant="hero"
-              size="lg"
-              className="w-full"
-              onClick={() => nav("/auth/login")}
-            >
+            <Button variant="hero" size="lg" className="w-full" onClick={() => nav("/auth/login")}>
               Enter the portal <ArrowRight className="h-4 w-4" />
             </Button>
 
@@ -510,6 +663,72 @@ const SignUp = () => {
           </div>
         )}
       </AuthCard>
+
+      {/* Phone OTP modal */}
+      <Dialog open={phoneOtpOpen} onOpenChange={setPhoneOtpOpen}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <div className="mx-auto h-12 w-12 rounded-full bg-gold-gradient flex items-center justify-center mb-2">
+              <Phone className="h-6 w-6 text-gold-foreground" />
+            </div>
+            <DialogTitle className="font-display text-2xl text-center">Verify your phone</DialogTitle>
+            <DialogDescription className="text-center">
+              Enter the 6-digit pin sent to <span className="text-foreground">{phone || "your phone"}</span>.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-center gap-2 py-2">
+            {phoneOtp.map((d, i) => (
+              <input
+                key={i}
+                id={`pin-${i}`}
+                inputMode="numeric"
+                maxLength={1}
+                value={d}
+                onChange={(e) => handlePhoneOtpChange(i, e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Backspace" && !phoneOtp[i] && i > 0) {
+                    document.getElementById(`pin-${i - 1}`)?.focus();
+                  }
+                }}
+                className="h-14 w-11 rounded-lg border border-border bg-input text-center font-display text-2xl text-gold focus:outline-none focus:ring-2 focus:ring-primary"
+              />
+            ))}
+          </div>
+
+          <div className="text-center text-sm text-muted-foreground">
+            Didn't get it?{" "}
+            <button type="button" onClick={() => toast.success("New pin sent")} className="text-gold hover:underline">
+              Resend pin
+            </button>
+          </div>
+
+          <Button variant="hero" size="lg" className="w-full" onClick={verifyPhoneOtp} disabled={loading}>
+            <Shield className="h-4 w-4" />
+            {loading ? "Verifying…" : "Verify pin"}
+          </Button>
+        </DialogContent>
+      </Dialog>
+
+      {/* Verification success modal */}
+      <Dialog open={verifySuccessOpen} onOpenChange={setVerifySuccessOpen}>
+        <DialogContent className="sm:max-w-md bg-card border-border">
+          <DialogHeader>
+            <div className="mx-auto h-14 w-14 rounded-full bg-gold-gradient flex items-center justify-center mb-2 shadow-glow">
+              <CheckCircle2 className="h-7 w-7 text-gold-foreground" />
+            </div>
+            <DialogTitle className="font-display text-2xl text-center">Verification successful</DialogTitle>
+            <DialogDescription className="text-center">
+              Your phone number has been verified. Let's finish{" "}
+              {isSeller ? "your identity check" : "your banking & logistics setup"}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <Button variant="hero" size="lg" className="w-full" onClick={continueAfterVerify}>
+            Continue <ArrowRight className="h-4 w-4" />
+          </Button>
+        </DialogContent>
+      </Dialog>
     </AuthLayout>
   );
 };
