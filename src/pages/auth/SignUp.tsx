@@ -249,8 +249,8 @@ const SignUp = () => {
           </div>
         )}
 
-        {/* STEP 1 — Account */}
-        {step === 1 && (
+        {/* STEP 2 — Account */}
+        {step === 2 && (
           <form onSubmit={submitAccount} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="fullName">Full name</Label>
@@ -341,8 +341,8 @@ const SignUp = () => {
           </form>
         )}
 
-        {/* STEP 2 — Organization */}
-        {step === 2 && (
+        {/* STEP 3 — Organization */}
+        {step === 3 && (
           <form onSubmit={submitOrg} className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="organization">Organization name</Label>
@@ -437,8 +437,8 @@ const SignUp = () => {
           </form>
         )}
 
-        {/* STEP 3 — OTP */}
-        {step === 3 && (
+        {/* STEP 4 — OTP */}
+        {step === 4 && (
           <form onSubmit={submitOtp} className="space-y-6">
             <div className="flex justify-center gap-2">
               {otp.map((d, i) => (
@@ -482,8 +482,8 @@ const SignUp = () => {
           </form>
         )}
 
-        {/* STEP 4 — Done */}
-        {step === 4 && (
+        {/* STEP 5 — Done */}
+        {step === 5 && (
           <div className="space-y-6 text-center">
             <div className="rounded-xl border border-border bg-secondary/40 p-5 text-left">
               <p className="text-xs uppercase tracking-[0.2em] text-gold">Account ready</p>
