@@ -14,6 +14,8 @@ import {
   User,
   Briefcase,
   Globe,
+  Store,
+  Bike,
 } from "lucide-react";
 import { AuthLayout } from "@/components/auth/AuthLayout";
 import { AuthCard } from "@/components/auth/AuthCard";
