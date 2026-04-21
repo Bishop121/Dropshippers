@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowLeft, CheckCircle2, Copy, Info, Landmark, ShieldCheck } from "lucide-react";
 import { BuyerHeader } from "@/components/buyer/BuyerHeader";
 import { BuyerFooter } from "@/components/buyer/BuyerFooter";
@@ -12,7 +12,30 @@ import { toast } from "sonner";
 
 const BuyerPayment = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [open, setOpen] = useState(false);
+  const productId = params.get("productId") ?? mockProduct.id;
+  const entry = params.get("entry");
+  const mode = params.get("mode") ?? "guest";
+  const provider = params.get("provider") ?? "cheinly";
+
+  useEffect(() => {
+    if (entry !== "secure-checkout") {
+      navigate(`/buyer/product?productId=${encodeURIComponent(productId)}`, { replace: true });
+    }
+  }, [entry, navigate, productId]);
+
+  const handleDashboard = () => {
+    const nextParams = new URLSearchParams({
+      productId,
+      entry: "secure-checkout",
+      mode,
+      provider,
+      status: "awaiting-verification",
+    });
+
+    navigate(`/buyer/dashboard?${nextParams.toString()}`);
+  };
 
   const copyAccount = () => {
     navigator.clipboard.writeText(mockProduct.seller.account);
@@ -98,7 +121,7 @@ const BuyerPayment = () => {
           </DialogHeader>
           <div className="space-y-2 pt-2">
             <Button
-              onClick={() => navigate("/buyer/dashboard")}
+              onClick={handleDashboard}
               className="w-full h-11 bg-primary hover:bg-primary/90 text-primary-foreground"
             >
               Go to Dashboard

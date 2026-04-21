@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Banknote, Building2, ChevronRight, Copy, Inbox, Package, Send, ShoppingBag, Wallet } from "lucide-react";
 import { BuyerHeader } from "@/components/buyer/BuyerHeader";
 import { BuyerFooter } from "@/components/buyer/BuyerFooter";
@@ -14,9 +14,26 @@ import { cn } from "@/lib/utils";
 
 const BuyerDashboard = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [fundOpen, setFundOpen] = useState(false);
   const [amount, setAmount] = useState(mockProduct.price);
   const [method, setMethod] = useState<"transfer" | "deposit">("transfer");
+  const productId = params.get("productId") ?? mockProduct.id;
+  const entry = params.get("entry");
+  const mode = params.get("mode") ?? "guest";
+  const provider = params.get("provider") ?? "cheinly";
+  const checkoutQuery = new URLSearchParams({
+    productId,
+    entry: "secure-checkout",
+    mode,
+    provider,
+  }).toString();
+
+  useEffect(() => {
+    if (entry !== "secure-checkout") {
+      navigate(`/buyer/product?productId=${encodeURIComponent(productId)}`, { replace: true });
+    }
+  }, [entry, navigate, productId]);
 
   const fee = +(amount * 0.015).toFixed(2);
   const final = amount + fee;
@@ -41,7 +58,7 @@ const BuyerDashboard = () => {
               </div>
             </div>
             <Button
-              onClick={() => navigate("/buyer/payment")}
+              onClick={() => navigate(`/buyer/payment?${checkoutQuery}`)}
               variant="secondary"
               className="bg-card text-foreground hover:bg-card/80 gap-2"
             >
@@ -110,7 +127,7 @@ const BuyerDashboard = () => {
                     <td className="p-4 text-muted-foreground">{mockProduct.seller.location}</td>
                     <td className="p-4 text-foreground font-semibold">{formatNaira(mockProduct.price)}</td>
                     <td className="p-4 text-right">
-                      <Button size="sm" onClick={() => navigate("/buyer/payment")} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <Button size="sm" onClick={() => navigate(`/buyer/payment?${checkoutQuery}`)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                         Pay Now
                       </Button>
                     </td>

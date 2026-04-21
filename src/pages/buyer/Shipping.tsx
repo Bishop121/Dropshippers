@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, MapPin, ShieldCheck, Truck, Zap } from "lucide-react";
 import { BuyerHeader } from "@/components/buyer/BuyerHeader";
 import { BuyerFooter } from "@/components/buyer/BuyerFooter";
@@ -14,8 +14,29 @@ const others = logisticsProviders.slice(3);
 
 const BuyerShipping = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [selected, setSelected] = useState("cheinly");
   const provider = logisticsProviders.find((p) => p.id === selected)!;
+  const productId = params.get("productId") ?? "MD-9521X";
+  const entry = params.get("entry");
+  const mode = params.get("mode") ?? "guest";
+
+  useEffect(() => {
+    if (entry !== "secure-checkout") {
+      navigate(`/buyer/product?productId=${encodeURIComponent(productId)}`, { replace: true });
+    }
+  }, [entry, navigate, productId]);
+
+  const handleProceed = () => {
+    const nextParams = new URLSearchParams({
+      productId,
+      entry: "secure-checkout",
+      mode,
+      provider: provider.id,
+    });
+
+    navigate(`/buyer/payment?${nextParams.toString()}`);
+  };
 
   return (
     <div className="min-h-screen bg-background bg-hero flex flex-col">
@@ -80,7 +101,7 @@ const BuyerShipping = () => {
             shippingFee={provider.price}
             ctaSlot={
               <Button
-                onClick={() => navigate("/buyer/payment")}
+                onClick={handleProceed}
                 className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground gap-2 mt-2"
               >
                 Proceed to Payment <ArrowRight className="h-4 w-4" />
