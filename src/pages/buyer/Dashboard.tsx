@@ -20,6 +20,14 @@ const BuyerDashboard = () => {
   const [method, setMethod] = useState<"transfer" | "deposit">("transfer");
   const productId = params.get("productId") ?? mockProduct.id;
   const entry = params.get("entry");
+  const mode = params.get("mode") ?? "guest";
+  const provider = params.get("provider") ?? "cheinly";
+  const checkoutQuery = new URLSearchParams({
+    productId,
+    entry: "secure-checkout",
+    mode,
+    provider,
+  }).toString();
 
   useEffect(() => {
     if (entry !== "secure-checkout") {
@@ -50,7 +58,7 @@ const BuyerDashboard = () => {
               </div>
             </div>
             <Button
-              onClick={() => navigate("/buyer/payment")}
+              onClick={() => navigate(`/buyer/payment?${checkoutQuery}`)}
               variant="secondary"
               className="bg-card text-foreground hover:bg-card/80 gap-2"
             >
@@ -119,7 +127,7 @@ const BuyerDashboard = () => {
                     <td className="p-4 text-muted-foreground">{mockProduct.seller.location}</td>
                     <td className="p-4 text-foreground font-semibold">{formatNaira(mockProduct.price)}</td>
                     <td className="p-4 text-right">
-                      <Button size="sm" onClick={() => navigate("/buyer/payment")} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <Button size="sm" onClick={() => navigate(`/buyer/payment?${checkoutQuery}`)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
                         Pay Now
                       </Button>
                     </td>
