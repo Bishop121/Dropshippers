@@ -83,7 +83,7 @@ const BuyerDashboard = () => {
                 onClick={() => setFundOpen(true)}
                 className="w-full bg-white/15 hover:bg-white/25 text-primary-foreground gap-1.5 backdrop-blur"
               >
-                <Send className="h-3.5 w-3.5" /> Fund Wallet
+                <Send className="h-3.5 w-3.5" /> Add Money
               </Button>
             </CardContent>
           </Card>
@@ -160,17 +160,17 @@ const BuyerDashboard = () => {
 
       {/* Fund Protected Balance modal */}
       <Dialog open={fundOpen} onOpenChange={setFundOpen}>
-        <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md p-0 overflow-hidden">
           <DialogHeader className="space-y-2">
-            <DialogTitle className="flex items-center gap-2 font-display text-xl">
-              <Wallet className="h-5 w-5 text-primary" /> Fund Protected Balance
+              <DialogTitle className="flex items-center gap-2 font-display text-xl px-6 pt-6">
+                <Wallet className="h-5 w-5 text-primary" /> Add Money to Protected Balance
             </DialogTitle>
-            <DialogDescription className="rounded-lg bg-primary/10 border border-primary/20 p-3 text-xs text-foreground/80 mt-2">
+              <DialogDescription className="mx-6 rounded-lg bg-primary/10 border border-primary/20 p-3 text-xs text-foreground/80 mt-2">
               Funds in your Protected Balance are held securely in escrow and only released when you confirm delivery.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-5 pt-2">
+          <div className="space-y-5 px-6 pb-6 pt-2">
             <div>
               <label className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground mb-2 block">Enter Amount</label>
               <div className="relative">
@@ -187,7 +187,7 @@ const BuyerDashboard = () => {
                   <button
                     key={q}
                     onClick={() => setAmount(q)}
-                    className="flex-1 rounded-md border border-border hover:border-gold/50 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    className="flex-1 rounded-md border border-border bg-secondary/40 hover:border-gold/50 py-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                   >
                     {formatNaira(q)}
                   </button>
@@ -213,7 +213,7 @@ const BuyerDashboard = () => {
               </div>
             </div>
 
-            <div className="rounded-lg bg-secondary border border-border p-4 space-y-2 text-sm">
+            <div className="rounded-lg bg-secondary border border-border p-4 space-y-3 text-sm">
               <Row label="Virtual Account Name" value={`CHEINLY/${mockBuyer.name.toUpperCase()}`} />
               <Row
                 label="Account Number"
