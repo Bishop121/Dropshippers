@@ -25,14 +25,21 @@ const BuyerProduct = () => {
 
   const galleryImage = useMemo(() => mockProduct.thumbs[activeImg] ?? mockProduct.image, [activeImg]);
 
+  const checkoutParams = new URLSearchParams({
+    productId,
+    entry: "secure-checkout",
+  });
+
   const handleGuest = () => {
     setOpen(false);
-    navigate("/buyer/shipping");
+    checkoutParams.set("mode", "guest");
+    navigate(`/buyer/shipping?${checkoutParams.toString()}`);
   };
 
   const handleGoogle = () => {
     setOpen(false);
-    navigate("/buyer/shipping?via=google");
+    checkoutParams.set("mode", "google");
+    navigate(`/buyer/shipping?${checkoutParams.toString()}`);
   };
 
   return (

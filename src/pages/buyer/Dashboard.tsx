@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowRight, Banknote, Building2, ChevronRight, Copy, Inbox, Package, Send, ShoppingBag, Wallet } from "lucide-react";
 import { BuyerHeader } from "@/components/buyer/BuyerHeader";
 import { BuyerFooter } from "@/components/buyer/BuyerFooter";
@@ -14,9 +14,18 @@ import { cn } from "@/lib/utils";
 
 const BuyerDashboard = () => {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
   const [fundOpen, setFundOpen] = useState(false);
   const [amount, setAmount] = useState(mockProduct.price);
   const [method, setMethod] = useState<"transfer" | "deposit">("transfer");
+  const productId = params.get("productId") ?? mockProduct.id;
+  const entry = params.get("entry");
+
+  useEffect(() => {
+    if (entry !== "secure-checkout") {
+      navigate(`/buyer/product?productId=${encodeURIComponent(productId)}`, { replace: true });
+    }
+  }, [entry, navigate, productId]);
 
   const fee = +(amount * 0.015).toFixed(2);
   const final = amount + fee;
