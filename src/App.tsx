@@ -11,6 +11,11 @@ import ForgotPassword from "./pages/auth/ForgotPassword";
 import VerifyOtp from "./pages/auth/VerifyOtp";
 import ResetPassword from "./pages/auth/ResetPassword";
 import Success from "./pages/auth/Success";
+import BuyerEntry from "./pages/buyer/Entry";
+import BuyerProduct from "./pages/buyer/Product";
+import BuyerShipping from "./pages/buyer/Shipping";
+import BuyerPayment from "./pages/buyer/Payment";
+import BuyerDashboard from "./pages/buyer/Dashboard";
 
 const queryClient = new QueryClient();
 
@@ -28,6 +33,12 @@ const App = () => (
           <Route path="/auth/verify-otp" element={<VerifyOtp />} />
           <Route path="/auth/reset-password" element={<ResetPassword />} />
           <Route path="/auth/success" element={<Success />} />
+          {/* Buyer flow (WhatsApp → product → shipping → payment → dashboard) */}
+          <Route path="/buy" element={<BuyerEntry />} />
+          <Route path="/buyer/product" element={<BuyerProduct />} />
+          <Route path="/buyer/shipping" element={<BuyerShipping />} />
+          <Route path="/buyer/payment" element={<BuyerPayment />} />
+          <Route path="/buyer/dashboard" element={<BuyerDashboard />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
